@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>LIGHT LPCA — Independent AI Orchestration</title>
+  <meta name="description" content="LIGHT LPCA is a Lucid Privacy-focused Cognitive Agent" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #0f0f0f;
+      --border: #1f1f1f;
+      --border-amber: rgba(217, 119, 6, 0.45);
+      --text: #f5f5f5;
+      --muted: #8a8a8a;
+      --amber: #d97706;
+      --amber-soft: rgba(217, 119, 6, 0.12);
+      --green: #10b981;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased; min-height: 100dvh;
+    }
+    .ambient {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(600px 420px at 22% 58%, rgba(161, 98, 7, 0.11), transparent 70%),
+        radial-gradient(520px 380px at 78% 24%, rgba(180, 83, 9, 0.08), transparent 72%);
+    }
+    .hidden { display: none !important; }
+    button { font-family: inherit; cursor: pointer; }
+    input, select { font-family: inherit; color: var(--text); }
+
+    /* LANDING (matches First Page.png) */
+    #landingView { position: relative; z-index: 1; min-height: 100dvh; display: flex; flex-direction: column; }
+    .land-nav {
+      max-width: 1180px; width: 100%; margin: 0 auto; padding: 22px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { font-weight: 800; letter-spacing: 0.08em; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .brand-tag {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 999px;
+      border: 1px solid var(--border-amber); color: #fbbf24; background: var(--amber-soft);
+    }
+    .pill-cta-nav {
+      background: rgba(24, 20, 14, 0.9); color: var(--text); border: 1px solid rgba(217, 119, 6, 0.55);
+      padding: 8px 18px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+      box-shadow: 0 0 22px rgba(217, 119, 6, 0.15);
+    }
+    .hero {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 48px 20px 64px;
+    }
+    .hero h1 { margin: 0; font-size: clamp(44px, 7vw, 76px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+    .hero h2 { margin: 4px 0 22px; font-size: clamp(32px, 5vw, 54px); font-weight: 300; color: #9a9a9a; letter-spacing: -0.02em; }
+    .hero p { max-width: 520px; color: var(--muted); font-size: 15.5px; line-height: 1.65; margin: 0 0 32px; }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+    .btn-white {
+      background: #ffffff; color: #0a0a0a; border: none; padding: 12px 28px; border-radius: 999px;
+      font-size: 13.5px; font-weight: 600; box-shadow: 0 0 30px rgba(255,255,255,0.12);
+    }
+    .btn-dark {
+      background: #111111; color: var(--text); border: 1px solid #262626; padding: 12px 26px;
+      border-radius: 999px; font-size: 13.5px; font-weight: 500;
+    }
+
+    /* WORKSPACE (matches Chat Interface.png) */
+    #appView {
+      position: relative; z-index: 1; height: 100dvh; padding: 12px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .topbar {
+      height: 50px; background: rgba(13, 13, 13, 0.92); border: 1px solid var(--border); border-radius: 14px;
+      padding: 0 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .top-left, .top-right { display: flex; align-items: center; gap: 12px; }
+    .icon-btn {
+      background: transparent; border: none; color: var(--muted); font-size: 18px; padding: 4px 8px; border-radius: 8px;
+    }
+    .icon-btn:hover { color: var(--text); background: #181818; }
+    .sync-pill {
+      display: flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: 0.08em;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .dot.off { background: #525252; box-shadow: none; }
+
+    .workspace-body { flex: 1; display: flex; gap: 12px; min-height: 0; }
+    .sidebar {
+      width: 256px; background: rgba(13, 13, 13, 0.92); border: 1px solid var(--border); border-radius: 14px;
+      display: flex; flex-direction: column; padding: 12px; flex-shrink: 0;
+    }
+    .sidebar.collapsed { display: none; }
+    .sb-top-btn {
+      width: 100%; background: #141414; border: 1px solid #242424; color: var(--text); border-radius: 10px;
+      padding: 9px 12px; font-size: 12.5px; font-weight: 500; text-align: left; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sb-top-btn:hover { border-color: var(--border-amber); }
+    .sb-scroll { flex: 1; overflow-y: auto; margin: 4px 0 10px; }
+    .sb-sec-label { font-size: 10.5px; color: #666; letter-spacing: 0.08em; text-transform: uppercase; margin: 10px 4px 6px; }
+    .sb-item { padding: 7px 10px; border-radius: 8px; font-size: 12px; color: #bdbdbd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .shadow-box {
+      background: #111111; border: 1px solid var(--border); border-radius: 11px; padding: 11px 12px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+    }
+    .shadow-title { font-size: 12.5px; font-weight: 500; }
+    .shadow-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+    .switch { width: 34px; height: 19px; background: #262626; border-radius: 999px; position: relative; cursor: pointer; transition: .2s; }
+    .switch.on { background: var(--amber); }
+    .switch::after { content: ""; position: absolute; width: 13px; height: 13px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: .2s; }
+    .switch.on::after { left: 18px; }
+    .settings-btn {
+      width: 100%; background: #141414; border: 1px solid #262626; color: var(--text);
+      padding: 10px; border-radius: 10px; font-size: 12.5px; font-weight: 500;
+    }
+
+    .chat-stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .chat-scroll { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; }
+    .empty-state { margin: auto; text-align: center; width: 100%; max-width: 680px; padding-bottom: 40px; }
+    .empty-state h2 { font-size: 22px; font-weight: 600; margin: 0 0 10px; }
+    .empty-state p { font-size: 13px; color: var(--muted); margin: 0; }
+    .msg-list { max-width: 780px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .msg-row { display: flex; flex-direction: column; }
+    .msg-row.user { align-items: flex-end; }
+    .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+    .msg-row.user .msg-bubble { background: #1a1a1a; border: 1px solid #282828; }
+    .msg-row.ai .msg-bubble { background: transparent; padding-left: 4px; max-width: 100%; }
+
+    .composer-wrap { max-width: 720px; width: 100%; margin: 0 auto; padding: 6px 8px 14px; }
+    .pill-input {
+      display: flex; align-items: center; gap: 10px; background: rgba(18, 18, 18, 0.94);
+      border: 1px solid #2b2720; border-radius: 999px; padding: 8px 10px 8px 20px;
+    }
+    .pill-input:focus-within { border-color: rgba(217, 119, 6, 0.65); }
+    .pill-input input { flex: 1; background: transparent; border: none; outline: none; font-size: 14px; color: var(--text); }
+    .pill-input input::placeholder { color: #737373; }
+    .send-circle { width: 34px; height: 34px; border-radius: 50%; border: none; background: #262626; color: #fff; font-size: 14px; }
+    .send-circle.ready { background: #ffffff; color: #0a0a0a; }
+    .composer-meta { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 0; font-size: 11.5px; color: var(--muted); }
+    .model-chip { background: transparent; border: none; color: var(--muted); font-size: 11.5px; display: inline-flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 6px; }
+
+    /* SETTINGS MODAL */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(8px);
+      z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px;
+    }
+    .modal-shell {
+      width: 100%; max-width: 860px; height: min(82dvh, 620px); background: #0c0c0c;
+      border: 1px solid #222; border-radius: 18px; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-hdr { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-body { flex: 1; display: grid; grid-template-columns: 200px 1fr; min-height: 0; }
+    .modal-nav { border-right: 1px solid var(--border); padding: 14px 10px; background: #0a0a0a; }
+    .nav-tab { width: 100%; text-align: left; background: transparent; border: 1px solid transparent; color: var(--muted); padding: 9px 12px; border-radius: 9px; font-size: 13px; margin-bottom: 4px; }
+    .nav-tab.active { background: rgba(217, 119, 6, 0.1); border-color: var(--border-amber); color: var(--text); }
+    .modal-content { padding: 22px 26px; overflow-y: auto; }
+    .panel-box { background: #101010; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    .field { width: 100%; background: #090909; border: 1px solid #262626; border-radius: 9px; padding: 9px 12px; font-size: 13px; margin-bottom: 10px; }
+    .btn-primary { background: #fff; color: #0a0a0a; border: none; border-radius: 9px; padding: 9px 16px; font-size: 12.5px; font-weight: 600; }
+    .btn-outline { background: #141414; color: var(--text); border: 1px solid #2a2a2a; border-radius: 9px; padding: 8px 14px; font-size: 12px; }
+    pre.code { background: #070707; border: 1px solid #1f1f1f; padding: 12px; border-radius: 9px; font-size: 12px; overflow-x: auto; color: #e5e5e5; }
+
+    #toast { position: fixed; bottom: 20px; right: 20px; z-index: 90; background: #121212; color: var(--text); border: 1px solid var(--border-amber); padding: 10px 16px; border-radius: 10px; font-size: 12.5px; display: none; }
+    @media (max-width: 780px) {
+      .sidebar { position: fixed; top: 70px; bottom: 12px; left: 12px; z-index: 30; }
+      .modal-body { grid-template-columns: 1fr; }
+      .modal-nav { display: flex; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient"></div>
+
+  <!-- 1. LANDING VIEW -->
+  <section id="landingView">
+    <header class="land-nav">
+      <div class="brand">LIGHT <span class="brand-tag">GROQ TURBO</span></div>
+      <button class="pill-cta-nav" onclick="openApp()">Get Started</button>
+    </header>
+    <main class="hero">
+      <h1>Independent</h1>
+      <h2>AI Orchestration</h2>
+      <p>Instant, secured AI chat with Groq streaming, persistent memory, and an autonomous Terminal Sleep-Mode worker for overnight tasks.</p>
+      <div class="hero-btns">
+        <button class="btn-white" onclick="openApp()">Start Chatting &rarr;</button>
+        <button class="btn-dark" onclick="openApp('terminal')">Terminal Sleep Mode</button>
+      </div>
+    </main>
+  </section>
+
+  <!-- 2. CLEAN CHAT WORKSPACE -->
+  <section id="appView" class="hidden">
+    <div class="topbar">
+      <div class="top-left">
+        <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Sidebar">&#9776;</button>
+        <span class="brand" style="cursor:pointer" onclick="showLanding()">LIGHT <span class="brand-tag">CHAT</span></span>
+      </div>
+      <div class="top-right">
+        <span id="latencyTop" style="font-size:11.5px;color:var(--muted);">Ready</span>
+        <div class="sync-pill">
+          <span id="syncDot" class="dot"></span>
+          <span id="syncLabel">GROQ SECURED</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="workspace-body">
+      <aside id="sidebar" class="sidebar">
+        <button class="sb-top-btn" onclick="newChat()">
+          <span>+ New Chat</span><span style="color:var(--muted)">Clear</span>
+        </button>
+        <button class="sb-top-btn" onclick="openSettings('terminal')">
+          <span>&#128187; Terminal Sleep Mode</span>
+        </button>
+        <div class="sb-scroll">
+          <div class="sb-sec-label">Saved Memories</div>
+          <div id="sbMemories"></div>
+        </div>
+        <div class="shadow-box">
+          <div>
+            <div class="shadow-title">Shadow Brain</div>
+            <div id="shadowSub" class="shadow-sub">Memory Sync: ON</div>
+          </div>
+          <div id="shadowSwitch" class="switch on" onclick="toggleShadow()"></div>
+        </div>
+        <button class="settings-btn" onclick="openSettings('api')">Settings &amp; Security</button>
+      </aside>
+
+      <div class="chat-stage">
+        <div id="chatScroll" class="chat-scroll">
+          <div id="emptyState" class="empty-state">
+            <h2>How can I help you today?</h2>
+            <p>Groq (<code>openai/gpt-oss-120b</code>) is connected securely. Just type below and press Enter.</p>
+          </div>
+          <div id="msgList" class="msg-list hidden"></div>
+        </div>
+
+        <div class="composer-wrap">
+          <div class="pill-input">
+            <input id="chatInput" placeholder="Share anything..." oninput="updateSendBtn()" onkeydown="if(event.key==='Enter')sendChat()" />
+            <button id="sendBtn" class="send-circle" onclick="sendChat()">&#10148;</button>
+          </div>
+          <div class="composer-meta">
+            <button class="model-chip" onclick="openSettings('api')">
+              <span>&#9881;</span><span id="activeModelLabel">openai/gpt-oss-120b (Groq)</span><span>&#9662;</span>
+            </button>
+            <span id="rateInfo" style="font-size:11px;">Protected · Rate Limited</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. SETTINGS MODAL -->
+  <div id="settingsModal" class="modal-backdrop hidden" onclick="if(event.target===this)closeSettings()">
+    <div class="modal-shell">
+      <div class="modal-hdr">
+        <div style="font-weight:700;font-size:15px;">Settings &amp; Terminal Worker</div>
+        <button class="icon-btn" onclick="closeSettings()">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-nav">
+          <button class="nav-tab active" data-tab="api" onclick="switchTab('api')">&#128737; API &amp; Security</button>
+          <button class="nav-tab" data-tab="terminal" onclick="switchTab('terminal')">&#128187; Terminal Sleep Mode</button>
+        </div>
+        <div class="modal-content">
+          <div id="tab-api">
+            <h3 style="margin:0 0 8px;">Secured Chat API</h3>
+            <div class="panel-box">
+              <div id="serverGroqStatus" style="font-size:13px;margin-bottom:8px;">Checking Groq backend...</div>
+              <div style="font-size:12px;color:var(--muted);">
+                &bull; Server-side <code>GROQ_API_KEY</code> is encrypted in Vercel Env (never exposed to browser JS).<br>
+                &bull; Protected by Sliding-Window IP Rate Limiter (25 req/min) &amp; CSP/XSS security headers.
+              </div>
+            </div>
+            <div class="panel-box">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Optional: Use your own personal API key instead</div>
+              <select id="provSelect" class="field"></select>
+              <input id="provKey" class="field" type="password" placeholder="Optional personal API key (kept only in your browser)" />
+              <button class="btn-primary" onclick="saveProvider()">Save Personal Key</button>
+              <button class="btn-outline" onclick="clearPersonalKeys()">Use Default Groq</button>
+            </div>
+          </div>
+
+          <div id="tab-terminal" class="hidden">
+            <h3 style="margin:0 0 8px;">Terminal Sleep-Mode Worker (Copy &amp; Run)</h3>
+            <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px;">
+              Give your task in terminal and go to sleep — it plans steps, runs research &amp; analysis, checkpoints after every step, and builds a <b>MORNING_BRIEFING.md/.html</b> report.
+            </p>
+            <pre class="code" id="termCmdBox">git clone https://github.com/harshitpratap1113-glitch/light-lpca-turbo.git
+cd light-lpca-turbo
+pip install -r requirements.txt
+python sleep.py "Build full competitor research & roadmap for my SaaS"</pre>
+            <button class="btn-primary" onclick="copyTermCmd()">Copy Terminal Commands</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const LS_CHAT = "light_lpca_chat_history_v1";
+    const LS_KEYS = "light_lpca_turbo_byok_v2";
+    let shadowEnabled = true;
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(window.__tt);
+      window.__tt = setTimeout(() => { t.style.display = "none"; }, 3000);
+    }
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+    function getLocalKeys() { try { return JSON.parse(localStorage.getItem(LS_KEYS) || "{}"); } catch { return {}; } }
+    function getLocalChat() { try { return JSON.parse(localStorage.getItem(LS_CHAT) || "[]"); } catch { return []; } }
+    function saveLocalChat(msgs) { localStorage.setItem(LS_CHAT, JSON.stringify(msgs.slice(-40))); }
+
+    function showLanding() {
+      document.getElementById("landingView").classList.remove("hidden");
+      document.getElementById("appView").classList.add("hidden");
+    }
+    function openApp(tab) {
+      document.getElementById("landingView").classList.add("hidden");
+      document.getElementById("appView").classList.remove("hidden");
+      refreshAll();
+      if (tab === "terminal") openSettings("terminal");
+    }
+    function toggleSidebar() { document.getElementById("sidebar").classList.toggle("collapsed"); }
+    function openSettings(tab = "api") { document.getElementById("settingsModal").classList.remove("hidden"); switchTab(tab); }
+    function closeSettings() { document.getElementById("settingsModal").classList.add("hidden"); }
+    function switchTab(tab) {
+      document.querySelectorAll(".nav-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+      ["api", "terminal"].forEach(id => document.getElementById("tab-" + id).classList.toggle("hidden", id !== tab));
+    }
+    function updateSendBtn() {
+      document.getElementById("sendBtn").classList.toggle("ready", document.getElementById("chatInput").value.trim().length > 0);
+    }
+
+    async function refreshAll() {
+      const [h, provs, mems] = await Promise.all([
+        fetch("/api/health").then(r => r.json()),
+        fetch("/api/vault/providers").then(r => r.json()),
+        fetch("/api/memory?limit=8").then(r => r.json()),
+      ]);
+      document.getElementById("serverGroqStatus").innerHTML = h.groq_ready
+        ? `<b style="color:var(--green)">● Server Groq API Active &amp; Secured</b>`
+        : `<b style="color:#fbbf24">○ Set GROQ_API_KEY in Vercel Env or add personal key below</b>`;
+      document.getElementById("rateInfo").textContent = `Protected · ${h.rate_limit_remaining ?? 25}/min left`;
+
+      document.getElementById("sbMemories").innerHTML = mems.map(m =>
+        `<div class="sb-item" title="${escapeHtml(m.fact)}">🧠 ${escapeHtml(m.fact)}</div>`
+      ).join("") || `<div class="sb-item" style="color:#555">Auto-saves key facts</div>`;
+
+      const store = getLocalKeys();
+      document.getElementById("provSelect").innerHTML = provs.map(p =>
+        `<option value="${p.id}" ${p.id === (store.active || "groq") ? "selected" : ""}>${p.label}</option>`
+      ).join("");
+
+      renderMessages(getLocalChat());
+    }
+
+    function renderMessages(msgs) {
+      const empty = document.getElementById("emptyState");
+      const list = document.getElementById("msgList");
+      if (!msgs.length) {
+        empty.classList.remove("hidden");
+        list.classList.add("hidden");
+        return;
+      }
+      empty.classList.add("hidden");
+      list.classList.remove("hidden");
+      list.innerHTML = msgs.map(m =>
+        `<div class="msg-row ${m.role === 'user' ? 'user' : 'ai'}"><div class="msg-bubble">${escapeHtml(m.content)}</div></div>`
+      ).join("");
+      const sc = document.getElementById("chatScroll");
+      sc.scrollTop = sc.scrollHeight;
+    }
+
+    function newChat() {
+      localStorage.removeItem(LS_CHAT);
+      renderMessages([]);
+      showToast("Started fresh chat");
+    }
+
+    async function sendChat() {
+      const inp = document.getElementById("chatInput");
+      const msg = inp.value.trim();
+      if (!msg) return;
+      inp.value = "";
+      updateSendBtn();
+
+      const msgs = getLocalChat();
+      msgs.push({ role: "user", content: msg });
+      saveLocalChat(msgs);
+      renderMessages(msgs);
+
+      const list = document.getElementById("msgList");
+      const aiRow = document.createElement("div");
+      aiRow.className = "msg-row ai";
+      const bubble = document.createElement("div");
+      bubble.className = "msg-bubble";
+      bubble.textContent = "⚡ ...";
+      aiRow.appendChild(bubble);
+      list.appendChild(aiRow);
+      const sc = document.getElementById("chatScroll");
+      sc.scrollTop = sc.scrollHeight;
+
+      const store = getLocalKeys();
+      const prov = store.active || "groq";
+      const key = (store.keys && store.keys[prov]) || undefined;
+      const t0 = performance.now();
+
+      try {
+        const resp = await fetch("/api/chat/stream", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ message: msg, provider: prov, api_key: key })
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ detail: "Request failed" }));
+          bubble.textContent = `⚠️ ${err.detail || resp.statusText}`;
+          return;
+        }
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let full = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          for (const line of dec.decode(value).split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            const ev = JSON.parse(line.slice(6));
+            if (ev.delta) { full += ev.delta; bubble.textContent = full; sc.scrollTop = sc.scrollHeight; }
+          }
+        }
+        msgs.push({ role: "ai", content: full });
+        saveLocalChat(msgs);
+        document.getElementById("latencyTop").textContent = `${Math.round(performance.now() - t0)} ms`;
+      } catch (e) {
+        bubble.textContent = "⚠️ Network error. Please try again.";
+      }
+    }
+
+    async function toggleShadow() {
+      shadowEnabled = !shadowEnabled;
+      document.getElementById("shadowSwitch").classList.toggle("on", shadowEnabled);
+      document.getElementById("syncDot").classList.toggle("off", !shadowEnabled);
+      document.getElementById("shadowSub").textContent = shadowEnabled ? "Memory Sync: ON" : "Memory Sync: OFF";
+      await fetch("/api/shadow/toggle", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({enabled: shadowEnabled}) });
+      showToast(shadowEnabled ? "Shadow Brain ON" : "Shadow Brain OFF");
+    }
+
+    function saveProvider() {
+      const prov = document.getElementById("provSelect").value;
+      const key = document.getElementById("provKey").value.trim();
+      const store = getLocalKeys();
+      store.active = prov;
+      store.keys = store.keys || {};
+      if (key) store.keys[prov] = key;
+      localStorage.setItem(LS_KEYS, JSON.stringify(store));
+      document.getElementById("provKey").value = "";
+      showToast(`Activated ${prov}`);
+      closeSettings();
+    }
+
+    function clearPersonalKeys() {
+      localStorage.removeItem(LS_KEYS);
+      showToast("Switched back to Server Groq API");
+      closeSettings();
+    }
+
+    function copyTermCmd() {
+      navigator.clipboard.writeText(document.getElementById("termCmdBox").textContent);
+      showToast("Terminal commands copied!");
+    }
+  </script>
+</body>
+</html>

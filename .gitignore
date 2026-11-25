@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.vercel/
+.python-version
+uv.lock
+.env
+.env.*
+*.db
+*.db-wal
+*.db-shm
+lpca_sleep_output/
